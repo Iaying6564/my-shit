@@ -1,0 +1,37 @@
+------------------------ BYPASS ------------------------
+local Remotes = {}
+local NetworkEnvironment = getmenv(rawget(rawget(require(game.ReplicatedStorage.Framework.Nevermore), '_lookupTable'), 'Network'))
+local EventsTable = debug.getupvalue(NetworkEnvironment.GetEventHandler, 1)
+local FunctionsTable = debug.getupvalue(NetworkEnvironment.GetFunctionHandler, 1)
+
+local function AddRemotes(StorageTable)
+   for Name, Info in pairs(StorageTable) do
+       if rawget(Info, 'Remote') then
+           Remotes[rawget(Info, 'Remote')] = Name
+       end
+   end
+end
+AddRemotes(EventsTable)
+AddRemotes(FunctionsTable)
+
+local Index
+Index = hookmetamethod(game, '__index', function(Self, Key)
+   if checkcaller() and (Key == 'Name' or Key == 'name') and Remotes[Self] then
+       return Remotes[Self]
+   end
+
+   return Index(Self, Key)
+end)
+
+
+
+------------------------ HYDROXIDE LOADER ------------------------
+local owner = "Upbolt"
+local branch = "revision"
+
+local function webImport(file)
+    return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
+end
+
+webImport("init")
+webImport("ui/main")
