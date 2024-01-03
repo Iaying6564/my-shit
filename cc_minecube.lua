@@ -13,7 +13,7 @@ if file then
 	file:gsub('([^,]+)', function(k) table.insert(parse, tonumber(k)) end)
 	simulatorExpected = { { parse[1], parse[2], parse[3] }, parse[4] }
 
-	print('start condition: ' .. cubesize .. ',' .. bx .. ',' .. by .. ',' .. bz .. ',' .. bd)
+	print('start condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4])
 end
 
 local relativeVector = { -1, 0, 0 } -- it starts slightly 1 block behind where it mines
@@ -51,7 +51,7 @@ end
 
 local forward = proxy(turtle.forward, 'forward', { 1, 0, 0 })
 local back = proxy(turtle.back, 'back', { -1, 0, 0 })
-local up = proxy(turtle.up, 'up' { 0, 1, 0 })
+local up = proxy(turtle.up, 'up', { 0, 1, 0 })
 local down = proxy(turtle.down, 'down', { 0, -1, 0 })
 local left = proxy(turtle.turnLeft, 'left', { 0, 0, -1 })
 local right = proxy(turtle.turnRight, 'right', { 0, 0, 1 })
@@ -278,7 +278,7 @@ function minePlane(plane, isLast)
 				mineForward()
 			else
 				checkPos(simulator, simulatorExpected)
-				simulated.forward(simulator)
+				simulators.forward(simulator)
 			end
 		end
 
@@ -289,9 +289,9 @@ function minePlane(plane, isLast)
 			mineForward()
 			turnFunc()
 		else
-			local turnFunc = turnBool and simulated.left or simulated.right
+			local turnFunc = turnBool and simulators.left or simulators.right
 			turnFunc(simulator)
-			simulated.forward(simulator)
+			simulators.forward(simulator)
 			turnFunc(simulator)
 		end
 	end
@@ -312,14 +312,14 @@ function minePlane(plane, isLast)
 				up()
 			end
 		else
-			simulated.up(simulator)
+			simulators.up(simulator)
 		end
 
 		if cubesize % 2 == 0 then
-			(found and right or simulated.right)()
+			(found and right or simulators.right)();
 		else
-			(found and left or simulated.left)()
-			(found and left or simulated.left)()
+			(found and left or simulators.left)();
+			(found and left or simulators.left)();
 		end
 	end
 end
@@ -341,7 +341,7 @@ if file then
 end
 ]]
 
-for x1 = by + 1, cubesize do
+for x1 = 1, cubesize do
 	minePlane(x1, x1 == cubesize)
 end
 
