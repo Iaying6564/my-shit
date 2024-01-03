@@ -316,10 +316,10 @@ function minePlane(plane, isLast)
 		end
 
 		if cubesize % 2 == 0 then
-			(found and right or simulators.right)();
+			(found and right or simulators.right)(simulator);
 		else
-			(found and left or simulators.left)();
-			(found and left or simulators.left)();
+			(found and left or simulators.left)(simulator);
+			(found and left or simulators.left)(simulator);
 		end
 	end
 end
