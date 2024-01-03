@@ -239,15 +239,16 @@ function mineForward()
 	end
 end
 
-function updatePos(x, y, z, d)
+function updatePos()
 	local file = fs.open('pos' .. cubesize, 'w')
-	file.write(x .. ',' .. y .. ',' .. z .. ',' .. d)
+	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[1] .. ',' .. relativeDirection)
 	file.close()
 end
 
 function minePlane(plane, isLast)
 	for x2 = 1, cubesize - 1 do
 		for x3 = 1, cubesize - 1 do
+			updatePos()
 			mineForward()
 		end
 
@@ -258,6 +259,7 @@ function minePlane(plane, isLast)
 	end
 
 	for x4 = 1, cubesize - 1 do
+		updatePos()
 		mineForward()
 	end
 
@@ -267,7 +269,7 @@ function minePlane(plane, isLast)
 			up()
 		end
 
-		if plane % 2 == 0 then
+		if cubesize % 2 == 0 then
 			right()
 		else
 			left()
