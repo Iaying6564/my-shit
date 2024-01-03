@@ -26,17 +26,17 @@ local relativeDirection = 0 -- forward
 local simulators = {}
 
 function proxy(callback, name, transformation)
-	function applyTransformation(relativeVector, relativeDirection)
-		relativeVector[1] = relativeVector[1] + (transformation[1] * ((-relativeDirection + 1) * ((relativeDirection + 1) % 2)))
-		relativeVector[2] = relativeVector[2] + transformation[2]
-		relativeVector[3] = relativeVector[3] + (transformation[1] * ((-relativeDirection + 2) * ((relativeDirection + 2) % 2)))
+	function applyTransformation(vector, direction)
+		vector[1] = vector[1] + (transformation[1] * ((-direction + 1) * ((direction + 1) % 2)))
+		vector[2] = vector[2] + transformation[2]
+		vector[3] = vector[3] + (transformation[1] * ((-direction + 2) * ((direction + 2) % 2)))
 
-		relativeDirection = (relativeDirection + transformation[3]) % 4
-		return relativeDirection
+		direction = (direction + transformation[3]) % 4
+		return direction
 	end
 
-	simulators[name] = function(simulation)
-		simulation[2] = applyTransformation(simulation[1], simulation[2])
+	simulators[name] = function()
+		simulator[2] = applyTransformation(simulator[1], simulator[2])
 	end
 
 	return function(...)
@@ -278,7 +278,7 @@ function minePlane(plane, isLast)
 				mineForward()
 			else
 				checkPos(simulator, simulatorExpected)
-				simulators.forward(simulator)
+				simulators.forward()
 			end
 		end
 
@@ -290,9 +290,9 @@ function minePlane(plane, isLast)
 			turnFunc()
 		else
 			local turnFunc = turnBool and simulators.left or simulators.right
-			turnFunc(simulator)
-			simulators.forward(simulator)
-			turnFunc(simulator)
+			turnFunc()
+			simulators.forward()
+			turnFunc()
 		end
 	end
 
@@ -302,6 +302,7 @@ function minePlane(plane, isLast)
 			mineForward()
 		else
 			checkPos(simulator, simulatorExpected)
+			simulators.forward()
 		end
 	end
 
@@ -312,14 +313,14 @@ function minePlane(plane, isLast)
 				up()
 			end
 		else
-			simulators.up(simulator)
+			simulators.up()
 		end
 
 		if cubesize % 2 == 0 then
-			(found and right or simulators.right)(simulator);
+			(found and right or simulators.right)();
 		else
-			(found and left or simulators.left)(simulator);
-			(found and left or simulators.left)(simulator);
+			(found and left or simulators.left)();
+			(found and left or simulators.left)();
 		end
 	end
 end
