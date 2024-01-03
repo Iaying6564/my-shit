@@ -5,9 +5,11 @@ if file then
 	print('recovery file found')
 	file = file.readAll()
 
-	local parse = file.split(',')
-	bx, by, bz, bd = tonumber(parse[1]), tonumber(parse[2]), tonumber(parse[3])
-	print('start condition: ' .. cubesize .. ',' .. parse)
+	local parse = {}
+	file:gsub('([^,]+)', function(k) table.insert(args, tonumber(k)) end)
+	bx, by, bz, bd = parse[1], parse[2], parse[3], parse[4]
+
+	print('start condition: ' .. cubesize .. ',' .. bx .. ',' .. by .. ',' .. bz .. ',' .. bd)
 end
 
 local relativeVector = { -1, 0, 0 } -- it starts slightly 1 block behind where it mines
