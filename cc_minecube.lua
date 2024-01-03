@@ -251,9 +251,7 @@ function minePlane(plane, isLast)
 			mineForward()
 		end
 
-		local planeVal = plane % 2 == 0
-		print(plane, x2, planeVal, x2 % 2 == 0)
-		local turnFunc = x2 % 2 == 0 and (planeVal and right or left) or (planeVal and left or right)
+		local turnFunc = x2 % 2 == 0 and left or right
 		turnFunc()
 		mineForward()
 		turnFunc()
@@ -269,8 +267,12 @@ function minePlane(plane, isLast)
 			up()
 		end
 
-		left()
-		left()
+		if plane % 2 == 0 then
+			right()
+		else
+			left()
+			left()
+		end
 	end
 end
 
