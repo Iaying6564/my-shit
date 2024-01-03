@@ -1,13 +1,17 @@
 local cubesize = ... and tonumber(...) or 3
 local file = fs.open('pos' .. cubesize, 'r')
-local bx, by, bz, bd = 0, 0, 0, 0
+
+local found = true
+local simulator = { { 0, 0, 0 }, 0 }
+local simulatorExpected = { { 0, 0, 0 }, 0 }
 if file then
 	print('recovery file found')
 	file = file.readAll()
+	found = false
 
 	local parse = {}
-	file:gsub('([^,]+)', function(k) table.insert(args, tonumber(k)) end)
-	bx, by, bz, bd = parse[1], parse[2], parse[3], parse[4]
+	file:gsub('([^,]+)', function(k) table.insert(parse, tonumber(k)) end)
+	simulatorExpected = { { parse[1], parse[2], parse[3] }, parse[4] }
 
 	print('start condition: ' .. cubesize .. ',' .. bx .. ',' .. by .. ',' .. bz .. ',' .. bd)
 end
@@ -19,27 +23,38 @@ local relativeDirection = 0 -- forward
 -- 2 = backward
 -- 3 = left
 
-function proxy(callback, transformation)
+local simulators = {}
+
+function proxy(callback, name, transformation)
+	function applyTransformation(relativeVector, relativeDirection)
+		relativeVector[1] = relativeVector[1] + (transformation[1] * ((-relativeDirection + 1) * ((relativeDirection + 1) % 2)))
+		relativeVector[2] = relativeVector[2] + transformation[2]
+		relativeVector[3] = relativeVector[3] + (transformation[1] * ((-relativeDirection + 2) * ((relativeDirection + 2) % 2)))
+
+		relativeDirection = (relativeDirection + transformation[3]) % 4
+		return relativeDirection
+	end
+
+	simulators[name] = function(simulation)
+		simulation[2] = applyTransformation(simulation[1], simulation[2])
+	end
+
 	return function(...)
 		local result = { callback(...) }
 		if result[1] then
-			relativeVector[1] = relativeVector[1] + (transformation[1] * ((-relativeDirection + 1) * ((relativeDirection + 1) % 2)))
-			relativeVector[2] = relativeVector[2] + transformation[2]
-			relativeVector[3] = relativeVector[3] + (transformation[1] * ((-relativeDirection + 2) * ((relativeDirection + 2) % 2)))
-
-			relativeDirection = (relativeDirection + transformation[3]) % 4
+			relativeDirection = applyTransformation(relativeVector, relativeDirection)
 		end
 
 		return unpack(result)
 	end
 end
 
-local forward = proxy(turtle.forward, { 1, 0, 0 })
-local back = proxy(turtle.back, { -1, 0, 0 })
-local up = proxy(turtle.up, { 0, 1, 0 })
-local down = proxy(turtle.down, { 0, -1, 0 })
-local left = proxy(turtle.turnLeft, { 0, 0, -1 })
-local right = proxy(turtle.turnRight, { 0, 0, 1 })
+local forward = proxy(turtle.forward, 'forward', { 1, 0, 0 })
+local back = proxy(turtle.back, 'back', { -1, 0, 0 })
+local up = proxy(turtle.up, 'up' { 0, 1, 0 })
+local down = proxy(turtle.down, 'down', { 0, -1, 0 })
+local left = proxy(turtle.turnLeft, 'left', { 0, 0, -1 })
+local right = proxy(turtle.turnRight, 'right', { 0, 0, 1 })
 
 function savePos()
 	local saved = {}
@@ -105,7 +120,6 @@ function chest()
 	end
 
 	local moveFunc = back
-	local direction = relativeDirection
 	if relativeDirection == 0 then
 		right()
 	elseif relativeDirection == 2 then
@@ -139,10 +153,10 @@ function back2pos(pos)
 	local dir = pos[2]
 
 	local moveFunc = back
-	if relativeDirection == 1 then
-		right()
-	elseif relativeDirection == 2 then
+	if relativeDirection == 0 then
 		moveFunc = forward
+	elseif relativeDirection == 1 then
+		right()
 	elseif relativeDirection == 3 then
 		left()
 	end
@@ -241,58 +255,99 @@ function mineForward()
 	end
 end
 
+function checkPos(simulator, simulatorExpected)
+	local vector = simulator[1]
+	local vectorExpected = simulatorExpected[1]
+	if vector[1] == vectorExpected[1] and vector[2] == vectorExpected[2] and vector[3] == vectorExpected[3] and simulator[2] == simulatorExpected[2] then
+		print('simulator reached conclusion, machine state restored')
+		found = true
+	end
+end
+
 function updatePos()
 	local file = fs.open('pos' .. cubesize, 'w')
-	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[1] .. ',' .. relativeDirection)
+	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 	file.close()
 end
 
 function minePlane(plane, isLast)
 	for x2 = 1, cubesize - 1 do
 		for x3 = 1, cubesize - 1 do
-			updatePos()
-			mineForward()
+			if found then
+				updatePos()
+				mineForward()
+			else
+				checkPos(simulator, simulatorExpected)
+				simulated.forward(simulator)
+			end
 		end
 
-		local turnFunc = x2 % 2 == 0 and left or right
-		turnFunc()
-		mineForward()
-		turnFunc()
+		local turnBool = x2 % 2 == 0
+		if found then
+			local turnFunc = turnBool and left or right
+			turnFunc()
+			mineForward()
+			turnFunc()
+		else
+			local turnFunc = turnBool and simulated.left or simulated.right
+			turnFunc(simulator)
+			simulated.forward(simulator)
+			turnFunc(simulator)
+		end
 	end
 
 	for x4 = 1, cubesize - 1 do
-		updatePos()
-		mineForward()
+		if found then
+			updatePos()
+			mineForward()
+		else
+			checkPos(simulator, simulatorExpected)
+		end
 	end
 
 	if not isLast then
-		if not up() then
-			turtle.digUp()
-			up()
+		if found then
+			if not up() then
+				turtle.digUp()
+				up()
+			end
+		else
+			simulated.up(simulator)
 		end
 
 		if cubesize % 2 == 0 then
-			right()
+			(found and right or simulated.right)()
 		else
-			left()
-			left()
+			(found and left or simulated.left)()
+			(found and left or simulated.left)()
 		end
 	end
 end
 
-mineForward()
-left()
-deposit()
-right()
+if not found then
+	mineForward()
+	left()
+	deposit()
+	right()
+end
 
 -- main
+--[[
 if file then
-	back2pos({ bx, by, bz }, bd)
+	left()
+	left()
+
+	back2pos({{ bx, by, bz }, bd})
 end
+]]
 
 for x1 = by + 1, cubesize do
 	minePlane(x1, x1 == cubesize)
 end
 
--- return home (the place where I belong)
-chest()
+if found then
+	-- return home (the place where I belong)
+	chest()
+else
+	print('simulator failed to find expected route')
+end
