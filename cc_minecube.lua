@@ -301,8 +301,16 @@ function checkPos()
 
 		local _, inspectData = turtle.inspect()
 		local facing = inspectData.state.facing
-		local relativeDirection = (directionsLookup[facing] - forwardDirection) % 4
-		print(directionsLookup[facing], forwardDirection, relativeDirection)
+		local diff = (((directionsLookup[facing] - 2) % 4) - forwardDirection) % 4
+
+		if math.abs(diff) > 1 then
+			left()
+			left()
+		elseif diff < 0 then
+			left()
+		else
+			right()
+		end
 
 		found = true
 	end
