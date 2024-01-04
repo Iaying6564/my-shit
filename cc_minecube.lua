@@ -6,9 +6,10 @@ local found = true
 local realPos = { { 0, 0, 0 }, 0 }
 local simulator = { { 0, 0, 0 }, 0 }
 local simulatorExpected = { { 0, 0, 0 }, 0 }
-if file then
-	print('recovery file found')
+if file and rfile then
+	print('recovery files found')
 	file = file.readAll()
+	rfile = rfile.readAll()
 	found = false
 
 	local parse = {}
@@ -22,6 +23,9 @@ if file then
 	realPos = { { parse[1], parse[2], parse[3] }, parse[4] }
 
 	print('real condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4])
+elseif file or rfile then
+	print('only 1 of 2 recovery files found, restart failed')
+	return
 end
 
 local relativeVector = { -1, 0, 0 } -- it starts slightly 1 block behind where it mines
@@ -51,8 +55,8 @@ function proxy(callback, transformation)
 		if found then
 			local result = { callback(...) }
 			if result[1] then
-				relativeDirection = applyTransformation(relativeVector, relativeDirection)
 				updateRawPos()
+				relativeDirection = applyTransformation(relativeVector, relativeDirection)
 			end
 
 			return unpack(result)
@@ -273,7 +277,9 @@ function checkPos()
 	local vector = simulator[1]
 	local vectorExpected = simulatorExpected[1]
 	if vector[1] == vectorExpected[1] and vector[2] == vectorExpected[2] and vector[3] == vectorExpected[3] and simulator[2] == simulatorExpected[2] then
+		print(realpos[1][1], realpos[1][2], realpos[1][3], realpos[2])
 		back2pos(realPos)
+		print(relativeVector[1], relativeVector[2], relativeVector[3], relativeDirection)
 		found = true
 	end
 end
