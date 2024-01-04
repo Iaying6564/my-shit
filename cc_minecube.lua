@@ -423,7 +423,7 @@ function ridExtraChest()
 	mineForward()
 	left()
 
-	turtle.select(15)
+	turtle.select(16)
 	if not turtle.place() then
 		repeat
 			turtle.dig()
@@ -439,7 +439,7 @@ if found then
 		local exists, inspectData = turtle.inspect()
 		local isChest = exists and inspectData.name:find('chest')
 		if exists and inspectData.name:find('chest') then
-			turtle.select(14)
+			turtle.select(15)
 			turtle.dig()
 		end
 
@@ -455,7 +455,7 @@ if found then
 
 			checkDir(-1)
 		else
-			turtle.select(15)
+			turtle.select(16)
 			turtle.place()
 
 			checkDir(-1)
@@ -469,7 +469,7 @@ if found then
 
 		local exists, inspectData = turtle.inspect()
 		if exists and inspectData.name:find('chest') then
-			turtle.select(14) -- empty slot
+			turtle.select(15) -- empty slot
 			turtle.dig() -- get chest
 			turtle.place() -- reset direction
 
@@ -477,7 +477,7 @@ if found then
 
 			checkDir(-1)
 		else
-			turtle.select(15)
+			turtle.select(16)
 			turtle.place()
 
 			checkDir(-1)
