@@ -14,6 +14,8 @@ local recalibrated = true
 local realPos = { { 0, 0, 0 }, 0 }
 local simulator = { { 0, 0, 0 }, 0 }
 local simulatorExpected = { { 0, 0, 0 }, 0 }
+
+local forwardDirection = 0
 if file and rfile then
 	print('recovery files found')
 	file = file.readAll()
@@ -24,7 +26,7 @@ if file and rfile then
 	local parse = {}
 	file:gsub('([^,]+)', function(k) table.insert(parse, tonumber(k)) end)
 
-	local startDirection = parse[1]
+	forwardDirection = parse[1]
 	simulatorExpected = { { parse[2], parse[3], parse[4] }, parse[5] }
 
 	print('start condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4])
@@ -300,13 +302,12 @@ function checkPos()
 		local _, inspectData = turtle.inspect()
 		local facing = inspectData.state.facing
 		local relativeDirection = (directionsLookup[facing] - forwardDirection) % 4
-		print(relativeDirection)
+		print(directionsLookup[facing], forwardDirection, relativeDirection)
 
 		found = true
 	end
 end
 
-local forwardDirection = 0
 function updatePos()
 	local file = fs.open('pos' .. cubesize, 'w')
 	file.write(forwardDirection .. ',' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
@@ -361,7 +362,6 @@ end
 function checkDir(offset)
 	local _, inspectData = turtle.inspect()
 	local facing = inspectData.state.facing
-	print(facing)
 	forwardDirection = (directionsLookup[facing] + offset) % 4
 end
 
