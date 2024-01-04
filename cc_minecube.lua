@@ -277,7 +277,7 @@ function checkPos()
 	local vector = simulator[1]
 	local vectorExpected = simulatorExpected[1]
 	if vector[1] == vectorExpected[1] and vector[2] == vectorExpected[2] and vector[3] == vectorExpected[3] and simulator[2] == simulatorExpected[2] then
-		print(realpos[1][1], realpos[1][2], realpos[1][3], realpos[2])
+		print(realPos[1][1], realPos[1][2], realPos[1][3], realPos[2])
 		back2pos(realPos)
 		print(relativeVector[1], relativeVector[2], relativeVector[3], relativeDirection)
 		found = true
