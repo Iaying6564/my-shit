@@ -421,7 +421,12 @@ function checkDir(offset)
 	forwardDirection = (directionsLookup[facing] + offset) % 4
 end
 
+local didRidExtraChest = false
 function ridExtraChest()
+	if turtle.getItemCount(16) < 2 then
+		print('put ' .. (2 - turtle.getItemCount(16)) .. ' chests in the last slot retard')
+	end
+
 	right()
 	mineForward()
 	left()
@@ -432,6 +437,7 @@ function ridExtraChest()
 			turtle.dig()
 		until turtle.place()
 	end
+	didRidExtraChest = true
 end
 
 if found then
@@ -486,11 +492,8 @@ if found then
 	end
 
 	deposit()
-
-	mineForward()
-	left()
-	deposit()
 	right()
+	mineForward()
 end
 
 -- main
