@@ -266,6 +266,7 @@ end
 
 function updatePos()
 	local file = fs.open('pos' .. cubesize, 'w')
+	print('updating pos to ' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 	file.close()
 end
@@ -277,8 +278,8 @@ function minePlane(plane, isLast)
 				updatePos()
 				mineForward()
 			else
-				checkPos(simulator, simulatorExpected)
 				simulators.forward()
+				checkPos(simulator, simulatorExpected)
 			end
 		end
 
@@ -301,8 +302,8 @@ function minePlane(plane, isLast)
 			updatePos()
 			mineForward()
 		else
-			checkPos(simulator, simulatorExpected)
 			simulators.forward()
+			checkPos(simulator, simulatorExpected)
 		end
 	end
 
