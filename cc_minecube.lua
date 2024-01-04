@@ -23,10 +23,8 @@ local relativeDirection = 0 -- forward
 -- 2 = backward
 -- 3 = left
 
-local simulators = {}
-
-function proxy(callback, name, transformation)
-	function applyTransformation(vector, direction)
+function proxy(callback, transformation)
+	local function applyTransformation(vector, direction)
 		vector[1] = vector[1] + (transformation[1] * ((-direction + 1) * ((direction + 1) % 2)))
 		vector[2] = vector[2] + transformation[2]
 		vector[3] = vector[3] + (transformation[1] * ((-direction + 2) * ((direction + 2) % 2)))
@@ -35,28 +33,27 @@ function proxy(callback, name, transformation)
 		return direction
 	end
 
-	simulators[name] = function()
-		simulator[2] = applyTransformation(simulator[1], simulator[2])
-	end
-
 	return function(...)
-		local result = { callback(...) }
-		if result[1] then
-			print('pos was to ' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
-			relativeDirection = applyTransformation(relativeVector, relativeDirection)
-			print('updated to ' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
-		end
+		if found then
+			local result = { callback(...) }
+			if result[1] then
+				relativeDirection = applyTransformation(relativeVector, relativeDirection)
+			end
 
-		return unpack(result)
+			return unpack(result)
+		else
+			relativeDirection = applyTransformation(relativeVector, relativeDirection)
+			return true
+		end
 	end
 end
 
-local forward = proxy(turtle.forward, 'forward', { 1, 0, 0 })
-local back = proxy(turtle.back, 'back', { -1, 0, 0 })
-local up = proxy(turtle.up, 'up', { 0, 1, 0 })
-local down = proxy(turtle.down, 'down', { 0, -1, 0 })
-local left = proxy(turtle.turnLeft, 'left', { 0, 0, -1 })
-local right = proxy(turtle.turnRight, 'right', { 0, 0, 1 })
+local forward = proxy(turtle.forward, { 1, 0, 0 })
+local back = proxy(turtle.back, { -1, 0, 0 })
+local up = proxy(turtle.up, { 0, 1, 0 })
+local down = proxy(turtle.down, { 0, -1, 0 })
+local left = proxy(turtle.turnLeft, { 0, 0, -1 })
+local right = proxy(turtle.turnRight, { 0, 0, 1 })
 
 function savePos()
 	local saved = {}
@@ -69,8 +66,8 @@ end
 
 function FUCKINGGRAVEL(isBack) -- FUCKING GRAVEL BLOCKING OUR WAY
 	if isBack then
-		turnLeft()
-		turnLeft()
+		left()
+		left()
 	end
 
 	repeat
@@ -97,8 +94,8 @@ function FUCKINGGRAVEL(isBack) -- FUCKING GRAVEL BLOCKING OUR WAY
 	end
 
 	if isBack then
-		turnLeft()
-		turnLeft()
+		left()
+		left()
 	end
 end
 
@@ -267,62 +264,50 @@ function checkPos(simulator, simulatorExpected)
 end
 
 function updatePos()
-	local file = fs.open('pos' .. cubesize, 'w')
-	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
-	file.close()
+	if found then
+		local file = fs.open('pos' .. cubesize, 'w')
+		file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
+		file.close()
+	end
 end
 
 function minePlane(plane, isLast)
 	for x2 = 1, cubesize - 1 do
 		for x3 = 1, cubesize - 1 do
-			if found then
-				updatePos()
-				mineForward()
-			else
-				simulators.forward()
+			updatePos()
+			mineForward()
+
+			if not found then
 				checkPos(simulator, simulatorExpected)
 			end
 		end
 
-		local turnBool = x2 % 2 == 0
-		if found then
-			local turnFunc = turnBool and left or right
-			turnFunc()
-			mineForward()
-			turnFunc()
-		else
-			local turnFunc = turnBool and simulators.left or simulators.right
-			turnFunc()
-			simulators.forward()
-			turnFunc()
-		end
+		local turnFunc = x2 % 2 == 0 and left or right
+		turnFunc()
+		mineForward()
+		turnFunc()
 	end
 
 	for x4 = 1, cubesize - 1 do
-		if found then
-			updatePos()
-			mineForward()
-		else
-			simulators.forward()
+		updatePos()
+		mineForward()
+
+		if not found then
 			checkPos(simulator, simulatorExpected)
 		end
 	end
 
 	if not isLast then
-		if found then
-			if not up() then
-				turtle.digUp()
-				up()
-			end
-		else
-			simulators.up()
+		if not up() then
+			turtle.digUp()
+			up()
 		end
 
 		if cubesize % 2 == 0 then
-			(found and right or simulators.right)();
+			right();
 		else
-			(found and left or simulators.left)();
-			(found and left or simulators.left)();
+			left();
+			left();
 		end
 	end
 end
@@ -333,7 +318,7 @@ if found then
 	deposit()
 	right()
 else
-	simulators.forward()
+	mineForward()
 end
 
 -- main
