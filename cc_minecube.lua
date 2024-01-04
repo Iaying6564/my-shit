@@ -269,7 +269,7 @@ function updatePos()
 	file.close()
 end
 
-function minePlane(plane, isLast)
+function minePlane(isLast)
 	for x2 = 1, cubesize - 1 do
 		for x3 = 1, cubesize - 1 do
 			if found then
@@ -332,7 +332,7 @@ end
 ]]
 
 for x1 = 1, cubesize do
-	minePlane(x1, x1 == cubesize)
+	minePlane(x1 == cubesize)
 end
 
 if found then
