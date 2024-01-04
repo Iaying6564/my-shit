@@ -264,22 +264,21 @@ function checkPos(simulator, simulatorExpected)
 end
 
 function updatePos()
-	if found then
-		local file = fs.open('pos' .. cubesize, 'w')
-		file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
-		file.close()
-	end
+	local file = fs.open('pos' .. cubesize, 'w')
+	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
+	file.close()
 end
 
 function minePlane(plane, isLast)
 	for x2 = 1, cubesize - 1 do
 		for x3 = 1, cubesize - 1 do
-			updatePos()
-			mineForward()
-
-			if not found then
+			if found then
+				updatePos()
+			else
 				checkPos(simulator, simulatorExpected)
 			end
+
+			mineForward()
 		end
 
 		local turnFunc = x2 % 2 == 0 and left or right
@@ -289,12 +288,13 @@ function minePlane(plane, isLast)
 	end
 
 	for x4 = 1, cubesize - 1 do
-		updatePos()
-		mineForward()
-
-		if not found then
+		if found then
+			updatePos()
+		else
 			checkPos(simulator, simulatorExpected)
 		end
+
+		mineForward()
 	end
 
 	if not isLast then
