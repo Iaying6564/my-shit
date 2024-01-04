@@ -238,7 +238,7 @@ function deposit()
 	local totalItems = 0
 	repeat
 		local totalItems = 0
-		for i = 1, 16 do
+		for i = 1, 15 do
 			local count = turtle.getItemCount(i)
 			if count > 0 then
 				totalItems = totalItems + count
@@ -255,7 +255,7 @@ function isGravel(exists, data)
 end
 
 function fullInventory() -- somehow this is the most effecient method
-	for i = 1, 16 do
+	for i = 1, 15 do
 		if turtle.getItemCount(i) == 0 then
 			return false
 		end
@@ -369,16 +369,18 @@ function updatePos()
 	file.close()
 end
 
-function minePlane(isLast)
+function minePlane(isLast, firstIgnore)
 	for x2 = 1, cubesize - 1 do
 		for x3 = 1, cubesize - 1 do
-			if found then
-				updatePos()
-			else
-				checkPos()
-			end
+			if not (x2 == 1 and x3 == 1 and firstIgnore) then
+				if found then
+					updatePos()
+				else
+					checkPos()
+				end
 
-			mineForward()
+				mineForward()
+			end
 		end
 
 		local turnFunc = x2 % 2 == 0 and left or right
@@ -414,7 +416,7 @@ end
 
 function checkDir(offset)
 	local _, inspectData = turtle.inspect()
-	local facing = inspectData.facing
+	local facing = inspectData.state.facing
 	print(facing)
 	forwardDirection = (directionsLookup[facing] + offset) % 4
 end
@@ -446,7 +448,7 @@ if found then
 
 		forward()
 		right()
-		forward()
+		mineForward()
 		left()
 		left()
 
@@ -461,11 +463,9 @@ if found then
 
 			checkDir(-1)
 		end
-
-		right()
 	else
 		right()
-		forward()
+		mineForward()
 		left()
 
 		local exists, inspectData = turtle.inspect()
@@ -483,9 +483,9 @@ if found then
 
 			checkDir(-1)
 		end
-
-		right()
 	end
+
+	deposit()
 
 	mineForward()
 	left()
