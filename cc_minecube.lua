@@ -69,12 +69,6 @@ function proxy(callback, transformation)
 			if result[1] then
 				relativeDirection = applyTransformation(relativeVector, relativeDirection)
 				updateRawPos()
-
-				if not recalibrated and turtle.detect() then
-					turtle.select(16)
-					turtle.place()
-					
-				end
 			end
 
 			return unpack(result)
@@ -298,76 +292,15 @@ function checkPos()
 		relativeVector = realPos[1]
 		relativeDirection = realPos[2]
 
-		while true do
-			if not down() then
-				if isGravel(turtle.inspectDown()) then
-					local originalY = relativeVector[2]
-					while isGravel(turtle.inspectDown()) do
-						turtle.digDown()
-						down()
-					end
+		turtle.select(16)
+		repeat
+			turtle.dig()
+		until turtle.place()
 
-					for i = relativeVector[2], originalY - 1 do
-						if not up() then
-							repeat
-								turtle.digUp()
-							until up()
-						end
-					end
-				else
-					break
-				end
-			end
-		end
-
-		local moveFunc = back
-		if relativeDirection == 0 then
-			right()
-		elseif relativeDirection == 2 then
-			left()
-		elseif relativeDirection == 3 then
-			moveFunc = forward
-		end
-
-		while true do
-			if not moveFunc() then
-				if isGravel(turtle.inspect()) then
-					FUCKINGGRAVEL(moveFunc == back)
-				else
-					break
-				end
-			end
-		end
-
-		local sinceLastChest = 0
-		for i = relativeVector[1], 0, -1 do
-			sinceLastChest = sinceLastChest + 1
-
-			local exists, inspectData = turtle.inspect()
-			if exists and inspectData.name:find('chest') then
-				sinceLastChest = 0
-			end
-
-			left()
-			if not moveFunc() and i > 0 then
-				FUCKINGGRAVEL(moveFunc == back)
-			end
-			right()
-		end
-
-		left()
-		local moveOtherFunc = moveFunc == back and forward or back
-		for i = 1, sinceLastChest do
-			moveOtherFunc()
-		end
-
-		relativeVector = { 0, 0, 0 }
-
-		if moveFunc == back then
-			left()
-		else
-			right()
-		end
+		local _, inspectData = turtle.inspect()
+		local facing = inspectData.state.facing
+		local relativeDirection = (directionsLookup[facing] - forwardDirection) % 4
+		print(relativeDirection)
 
 		found = true
 	end
