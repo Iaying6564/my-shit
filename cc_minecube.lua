@@ -1,7 +1,9 @@
 local cubesize = ... and tonumber(...) or 3
 local file = fs.open('pos' .. cubesize, 'r')
+local rfile = fs.open('rpos' .. cubesize, 'r')
 
 local found = true
+local realPos = { { 0, 0, 0 }, 0 }
 local simulator = { { 0, 0, 0 }, 0 }
 local simulatorExpected = { { 0, 0, 0 }, 0 }
 if file then
@@ -14,6 +16,12 @@ if file then
 	simulatorExpected = { { parse[1], parse[2], parse[3] }, parse[4] }
 
 	print('start condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4])
+
+	local parse = {}
+	rfile:gsub('([^,]+)', function(k) table.insert(parse, tonumber(k)) end)
+	realPos = { { parse[1], parse[2], parse[3] }, parse[4] }
+
+	print('real condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4])
 end
 
 local relativeVector = { -1, 0, 0 } -- it starts slightly 1 block behind where it mines
@@ -22,6 +30,12 @@ local relativeDirection = 0 -- forward
 -- 1 = right
 -- 2 = backward
 -- 3 = left
+
+function updateRawPos()
+	local file = fs.open('rpos' .. cubesize, 'w')
+	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
+	file.close()
+end
 
 function proxy(callback, transformation)
 	local function applyTransformation(vector, direction)
@@ -38,11 +52,12 @@ function proxy(callback, transformation)
 			local result = { callback(...) }
 			if result[1] then
 				relativeDirection = applyTransformation(relativeVector, relativeDirection)
+				updateRawPos()
 			end
 
 			return unpack(result)
 		else
-			relativeDirection = applyTransformation(relativeVector, relativeDirection)
+			simulator[2] = applyTransformation(simulator[1], simulator[2])
 			return true
 		end
 	end
@@ -257,10 +272,8 @@ end
 function checkPos()
 	local vector = simulator[1]
 	local vectorExpected = simulatorExpected[1]
-	print(1, vector[1], vector[2], vector[3], simulator[2])
-	print(2, vectorExpected[1], vectorExpected[2], vectorExpected[3], simulatorExpected[2])
 	if vector[1] == vectorExpected[1] and vector[2] == vectorExpected[2] and vector[3] == vectorExpected[3] and simulator[2] == simulatorExpected[2] then
-		print('simulator reached conclusion, machine state restored')
+		back2pos(realPos)
 		found = true
 	end
 end
@@ -319,8 +332,6 @@ if found then
 	left()
 	deposit()
 	right()
-else
-	mineForward()
 end
 
 -- main
