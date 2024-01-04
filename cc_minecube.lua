@@ -29,7 +29,7 @@ if file and rfile then
 	forwardDirection = parse[1]
 	simulatorExpected = { { parse[2], parse[3], parse[4] }, parse[5] }
 
-	print('start condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4])
+	print('start condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4] .. ',' .. parse[5])
 
 	local parse = {}
 	rfile:gsub('([^,]+)', function(k) table.insert(parse, tonumber(k)) end)
@@ -303,6 +303,7 @@ function checkPos()
 		local facing = inspectData.state.facing
 		local diff = (((directionsLookup[facing] - 2) % 4) - forwardDirection) % 4
 
+		print(directionLookup[facing], forwardDirection, diff)
 		if math.abs(diff) > 1 then
 			left()
 			left()
