@@ -415,6 +415,7 @@ end
 function checkDir(offset)
 	local _, inspectData = turtle.inspect()
 	local facing = inspectData.facing
+	print(facing)
 	forwardDirection = (directionsLookup[facing] + offset) % 4
 end
 
@@ -451,9 +452,9 @@ if found then
 
 		if isChest then
 			turtle.place()
-			ridExtraChest()
-
 			checkDir(-1)
+
+			ridExtraChest()
 		else
 			turtle.select(16)
 			turtle.place()
@@ -473,9 +474,9 @@ if found then
 			turtle.dig() -- get chest
 			turtle.place() -- reset direction
 
-			ridExtraChest()
-
 			checkDir(-1)
+
+			ridExtraChest()
 		else
 			turtle.select(16)
 			turtle.place()
