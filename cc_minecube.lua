@@ -42,7 +42,9 @@ function proxy(callback, name, transformation)
 	return function(...)
 		local result = { callback(...) }
 		if result[1] then
+			print('pos was to ' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 			relativeDirection = applyTransformation(relativeVector, relativeDirection)
+			print('updated to ' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 		end
 
 		return unpack(result)
@@ -266,7 +268,6 @@ end
 
 function updatePos()
 	local file = fs.open('pos' .. cubesize, 'w')
-	print('updating pos to ' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 	file.close()
 end
@@ -326,11 +327,13 @@ function minePlane(plane, isLast)
 	end
 end
 
-if not found then
+if found then
 	mineForward()
 	left()
 	deposit()
 	right()
+else
+	simulators.forward()
 end
 
 -- main
