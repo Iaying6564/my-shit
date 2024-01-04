@@ -254,9 +254,11 @@ function mineForward()
 	end
 end
 
-function checkPos(simulator, simulatorExpected)
+function checkPos()
 	local vector = simulator[1]
 	local vectorExpected = simulatorExpected[1]
+	print(1, vector[1], vector[2], vector[3], simulator[2])
+	print(2, vectorExpected[1], vectorExpected[2], vectorExpected[3], simulatorExpected[2])
 	if vector[1] == vectorExpected[1] and vector[2] == vectorExpected[2] and vector[3] == vectorExpected[3] and simulator[2] == simulatorExpected[2] then
 		print('simulator reached conclusion, machine state restored')
 		found = true
@@ -275,7 +277,7 @@ function minePlane(isLast)
 			if found then
 				updatePos()
 			else
-				checkPos(simulator, simulatorExpected)
+				checkPos()
 			end
 
 			mineForward()
@@ -291,7 +293,7 @@ function minePlane(isLast)
 		if found then
 			updatePos()
 		else
-			checkPos(simulator, simulatorExpected)
+			checkPos()
 		end
 
 		mineForward()
