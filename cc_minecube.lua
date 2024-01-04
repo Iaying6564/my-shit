@@ -10,6 +10,7 @@ local directionsLookup = {
 }
 
 local found = true
+local recalibrated = true
 local realPos = { { 0, 0, 0 }, 0 }
 local simulator = { { 0, 0, 0 }, 0 }
 local simulatorExpected = { { 0, 0, 0 }, 0 }
@@ -17,11 +18,14 @@ if file and rfile then
 	print('recovery files found')
 	file = file.readAll()
 	rfile = rfile.readAll()
+	recalibrated = false
 	found = false
 
 	local parse = {}
 	file:gsub('([^,]+)', function(k) table.insert(parse, tonumber(k)) end)
-	simulatorExpected = { { parse[1], parse[2], parse[3] }, parse[4] }
+
+	local startDirection = parse[1]
+	simulatorExpected = { { parse[2], parse[3], parse[4] }, parse[5] }
 
 	print('start condition: ' .. cubesize .. ',' .. parse[1] .. ',' .. parse[2] .. ',' .. parse[3] .. ',' .. parse[4])
 
@@ -60,10 +64,17 @@ function proxy(callback, transformation)
 
 	return function(...)
 		if found then
+			updateRawPos()
 			local result = { callback(...) }
 			if result[1] then
-				updateRawPos()
 				relativeDirection = applyTransformation(relativeVector, relativeDirection)
+				updateRawPos()
+
+				if not recalibrated and turtle.detect() then
+					turtle.select(16)
+					turtle.place()
+					
+				end
 			end
 
 			return unpack(result)
@@ -507,7 +518,7 @@ end
 ]]
 
 for x1 = 1, cubesize do
-	minePlane(x1 == cubesize)
+	minePlane(x1 == cubesize, didRidExtraChest)
 end
 
 if found then
