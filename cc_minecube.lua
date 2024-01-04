@@ -2,6 +2,13 @@ local cubesize = ... and tonumber(...) or 3
 local file = fs.open('pos' .. cubesize, 'r')
 local rfile = fs.open('rpos' .. cubesize, 'r')
 
+local directionsLookup = {
+	['north'] = 0,
+	['east'] = 1,
+	['south'] = 2,
+	['west'] = 3,
+}
+
 local found = true
 local realPos = { { 0, 0, 0 }, 0 }
 local simulator = { { 0, 0, 0 }, 0 }
@@ -280,16 +287,85 @@ function checkPos()
 		relativeVector = realPos[1]
 		relativeDirection = realPos[2]
 
-		print(relativeVector[1], relativeVector[2], relativeVector[3], relativeDirection)
-		back2pos(simulatorExpected)
-		print(relativeVector[1], relativeVector[2], relativeVector[3], relativeDirection)
+		while true do
+			if not down() then
+				if isGravel(turtle.inspectDown()) then
+					local originalY = relativeVector[2]
+					while isGravel(turtle.inspectDown()) do
+						turtle.digDown()
+						down()
+					end
+
+					for i = relativeVector[2], originalY - 1 do
+						if not up() then
+							repeat
+								turtle.digUp()
+							until up()
+						end
+					end
+				else
+					break
+				end
+			end
+		end
+
+		local moveFunc = back
+		if relativeDirection == 0 then
+			right()
+		elseif relativeDirection == 2 then
+			left()
+		elseif relativeDirection == 3 then
+			moveFunc = forward
+		end
+
+		while true do
+			if not moveFunc() then
+				if isGravel(turtle.inspect()) then
+					FUCKINGGRAVEL(moveFunc == back)
+				else
+					break
+				end
+			end
+		end
+
+		local sinceLastChest = 0
+		for i = relativeVector[1], 0, -1 do
+			sinceLastChest = sinceLastChest + 1
+
+			local exists, inspectData = turtle.inspect()
+			if exists and inspectData.name:find('chest') then
+				sinceLastChest = 0
+			end
+
+			left()
+			if not moveFunc() and i > 0 then
+				FUCKINGGRAVEL(moveFunc == back)
+			end
+			right()
+		end
+
+		left()
+		local moveOtherFunc = moveFunc == back and forward or back
+		for i = 1, sinceLastChest do
+			moveOtherFunc()
+		end
+
+		relativeVector = { 0, 0, 0 }
+
+		if moveFunc == back then
+			left()
+		else
+			right()
+		end
+
 		found = true
 	end
 end
 
+local forwardDirection = 0
 function updatePos()
 	local file = fs.open('pos' .. cubesize, 'w')
-	file.write(relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
+	file.write(forwardDirection .. ',' .. relativeVector[1] .. ',' .. relativeVector[2] .. ',' .. relativeVector[3] .. ',' .. relativeDirection)
 	file.close()
 end
 
@@ -328,15 +404,88 @@ function minePlane(isLast)
 		end
 
 		if cubesize % 2 == 0 then
-			right();
+			right()
 		else
-			left();
-			left();
+			left()
+			left()
 		end
 	end
 end
 
+function checkDir(offset)
+	local _, inspectData = turtle.inspect()
+	local facing = inspectData.facing
+	forwardDirection = (directionsLookup[facing] + offset) % 4
+end
+
+function ridExtraChest()
+	right()
+	mineForward()
+	left()
+
+	turtle.select(15)
+	if not turtle.place() then
+		repeat
+			turtle.dig()
+		until turtle.place()
+	end
+end
+
 if found then
+	left()
+	if forward() then
+		right()
+
+		local exists, inspectData = turtle.inspect()
+		local isChest = exists and inspectData.name:find('chest')
+		if exists and inspectData.name:find('chest') then
+			turtle.select(14)
+			turtle.dig()
+		end
+
+		forward()
+		right()
+		forward()
+		left()
+		left()
+
+		if isChest then
+			turtle.place()
+			ridExtraChest()
+
+			checkDir(-1)
+		else
+			turtle.select(15)
+			turtle.place()
+
+			checkDir(-1)
+		end
+
+		right()
+	else
+		right()
+		forward()
+		left()
+
+		local exists, inspectData = turtle.inspect()
+		if exists and inspectData.name:find('chest') then
+			turtle.select(14) -- empty slot
+			turtle.dig() -- get chest
+			turtle.place() -- reset direction
+
+			ridExtraChest()
+
+			checkDir(-1)
+		else
+			turtle.select(15)
+			turtle.place()
+
+			checkDir(-1)
+		end
+
+		right()
+	end
+
 	mineForward()
 	left()
 	deposit()
